@@ -119,7 +119,7 @@ void loop(void) {
       Serial.println("Opcion no existe");
     }
 
-  // if the file is available, write to it:
+  // if the file is available, write to serial out:
   if (dataFile) {
     while (dataFile.available()) {
       Serial.write(dataFile.read());

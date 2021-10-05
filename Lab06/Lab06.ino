@@ -88,7 +88,7 @@ void loop()
   // put your main code here, to run repeatedly:
   p1state = digitalRead(p1);
 
-  if (p1state != p1old)
+  if (p1state != p1old && !ganador)
   {
     if (p1state == LOW)
     {
@@ -107,7 +107,7 @@ void loop()
 
   p2state = digitalRead(p2);
 
-  if (p2state != p2old)
+  if (p2state != p2old && !ganador)
   {
     if (p2state == LOW)
     {
@@ -125,8 +125,13 @@ void loop()
   }
 
   
-  if (!ganador)
-  {
+   digitalWrite(BLUE_LED, !ganador);
+
+  
+  if (ganador) {
+    digitalWrite(RED_LED, ganador && player1 >= 10);
+    digitalWrite(GREEN_LED, ganador && player2 >= 10);
+  } else {
 
     switch (player1)
     {
@@ -251,6 +256,133 @@ void loop()
       digitalWrite(j18, HIGH);
       digitalWrite(j19, HIGH);
       Serial.println("Jugador 1 ha ganado");
+      ganador = true;
+      break;
+    }
+
+    switch (player2)
+    {
+    case 0:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 1:
+      digitalWrite(j21, HIGH);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 2:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, HIGH);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 3:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, HIGH);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 4:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, HIGH);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 5:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, HIGH);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 6:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, HIGH);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 7:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, HIGH);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, LOW);
+      break;
+    case 8:
+      digitalWrite(j21, LOW);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, HIGH);
+      digitalWrite(j49, LOW);
+      break;
+    case 9:
+      digitalWrite(j21, HIGH);
+      digitalWrite(j22, LOW);
+      digitalWrite(j23, LOW);
+      digitalWrite(j25, LOW);
+      digitalWrite(j26, LOW);
+      digitalWrite(j27, LOW);
+      digitalWrite(j28, LOW);
+      digitalWrite(j29, LOW);
+      digitalWrite(j49, HIGH);
+      break;
+    case 10:
+      digitalWrite(j21, HIGH);
+      digitalWrite(j22, HIGH);
+      digitalWrite(j23, HIGH);
+      digitalWrite(j25, HIGH);
+      digitalWrite(j26, HIGH);
+      digitalWrite(j27, HIGH);
+      digitalWrite(j28, HIGH);
+      digitalWrite(j29, HIGH);
+      digitalWrite(j49, HIGH);
+      Serial.println("Jugador 2 ha ganado");
       ganador = true;
       break;
     }
