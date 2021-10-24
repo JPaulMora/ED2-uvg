@@ -85,6 +85,8 @@ void setup() {
 int game_loops = 0;
 int game_speed = 10;
 
+String loser[] = {"L", "O", "S", "E", "R"};
+
 int x = 10;
 int y = 10;
 int speed_x = 3;
@@ -109,9 +111,17 @@ void draw_field() {
   FillRect(160,5 ,5, 230, 0xFFFFF);
 }
 
-void draw_points(unsigned int p1, unsigned int p2) {
-  for (int i= 0; i < p1; i++) {
-    FillRect(150, 5, 5,10, 0xFFFFF);
+
+void draw_score() {
+
+  for (int a = 0; a < points_1; a++) {
+//    FillRect(170 + a*10 ,5,5, 5, 0x44444);
+    LCD_Print(loser[a],170 + a*10 ,5,1, 0x44444, 0x0000);
+  }
+
+  for (int b = 0; b < points_2; b++) {
+//    FillRect(150 - b*10 ,5,5, 5, 0x88888);
+    LCD_Print(loser[b],100 + b*10 ,5,1, 0x88888, 0x0000);
   }
 }
 
@@ -142,18 +152,23 @@ void draw_ball() {
         speed_y += 1;
       } else {
 
-        // Count point
-        FillRect(x, y,5,5, 0x0);
-        x = 155;
-        speed_y = 3;
 
+        // Count point
         if (x <= 10) {
           points_2 += 1;
+          Serial.print("Player 2: ");
+          Serial.println(points_2);
         } else if (x >= 305) {
           points_1 += 1;
+          Serial.print("Player 1: ");
+          Serial.println(points_1);
         }
+
+        
+          FillRect(x, y,5,5, 0x0);
+          x = 155;
+          speed_y = 3;
       }
-      
     }
   }
 }
@@ -167,17 +182,16 @@ void loop() {
   }else {
     game_speed = 200/game_loops;
   }
-
-  draw_points(points_1, points_2);
-  
+ 
   sensorValue = analogRead(analogInPin);
   player1 = map(sensorValue, 0, 4095, 0, 210); 
-  Serial.print("sensor = " );                       
-  Serial.println(speed_y);
+//  Serial.print("sensor = " );                       
+//  Serial.println(speed_y);
   
   draw_player(5,player1);
   draw_player(310,player1);
   draw_field();
+  draw_score();
   
   draw_ball();
 
