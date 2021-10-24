@@ -100,10 +100,19 @@ void draw_player(unsigned int x, unsigned int y) {
   FillRect(x,0,5, y, 0x0);
   FillRect(x,y,5, PAD_WIDTH, 0xFFFFF);
   FillRect(x,y+PAD_WIDTH,5, 20, 0x0);
+
+  
+//  FillRect(x,y + PAD_WIDTH/3,5, PAD_WIDTH/3, 0x9922); // Debug
 }
 
 void draw_field() {
   FillRect(160,5 ,5, 230, 0xFFFFF);
+}
+
+void draw_points(unsigned int p1, unsigned int p2) {
+  for (int i= 0; i < p1; i++) {
+    FillRect(150, 5, 5,10, 0xFFFFF);
+  }
 }
 
 void draw_ball() {
@@ -119,13 +128,32 @@ void draw_ball() {
     if (y <= 0 || y >= 235) {
       speed_y = -speed_y;
     }
-  
+
+    // Handle collisions with pads
+    
     if (x <= 10 || x >= 305) {
-      if (y >= player1 && y <= player1 + PAD_WIDTH) {
-        speed_x = -speed_x;
+      speed_x = -speed_x;
+      // change ball direction depending on bounce location
+      if (y >= player1 && y <= player1 + PAD_WIDTH*(1/3)) {
+        speed_y -=1;
+      } else if (y >= player1 + PAD_WIDTH*(1/3) && y <= player1 + PAD_WIDTH*(2/3)) {
+        speed_y = 1;
+      } else if (y >= player1 + PAD_WIDTH*(2/3) && y <= player1 + PAD_WIDTH) {
+        speed_y += 1;
       } else {
+
+        // Count point
+        FillRect(x, y,5,5, 0x0);
         x = 155;
+        speed_y = 3;
+
+        if (x <= 10) {
+          points_2 += 1;
+        } else if (x >= 305) {
+          points_1 += 1;
+        }
       }
+      
     }
   }
 }
@@ -134,22 +162,25 @@ void loop() {
   game_loops +=1;
   if (game_speed <= 1) {
     game_speed = 1;
-  } else if (game_speed >10) {
-    game_speed = 10;
+  } else if (game_speed >2) {
+    game_speed = 2;
   }else {
-    game_speed = 20000/game_loops;
+    game_speed = 200/game_loops;
   }
+
+  draw_points(points_1, points_2);
   
   sensorValue = analogRead(analogInPin);
   player1 = map(sensorValue, 0, 4095, 0, 210); 
   Serial.print("sensor = " );                       
-  Serial.println(player1);
+  Serial.println(speed_y);
   
   draw_player(5,player1);
   draw_player(310,player1);
   draw_field();
   
   draw_ball();
+
 }
 
 
