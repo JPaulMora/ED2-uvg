@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <SPI.h>
+#include <SD.h>
 #include <TM4C123GH6PM.h>
 #include "inc/hw_ints.h"
 #include "inc/hw_memmap.h"
@@ -25,11 +27,49 @@
 #include "font.h"
 #include "lcd_registers.h"
 
+#include "bitmaps.h"
+
+#define loserp2 "loserp2.bmp"
+#define loserp1 "loserp1.bmp"
+
+#define bmp_offset 150
+
 #define LCD_RST PD_0
 #define LCD_CS PD_1
 #define LCD_RS PD_2
 #define LCD_WR PD_3
 #define LCD_RD PE_1
+
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+
+#define PAD_WIDTH 30
+
+
+const int analogInPin1 = PE_2;
+const int analogInPin2 = PE_3;
+const int chipSelect = PA_3; //cs PIN
+int sensorValue = 0;
+int game_loops = 0;
+int game_speed = 10;
+
+String loser[] = {"L", "O", "S", "E", "R"};
+
+int x = 10;
+int y = 10;
+int speed_x = 3;
+int speed_y = 2;
+
+int player1 = 0;
+int player2 = 0;
+
+int points_1 = 0;
+int points_2 = 0;
+Sd2Card card;
+SdVolume volume;
+SdFile root;
+File dataFile;
+
 int DPINS[] = {PB_0, PB_1, PB_2, PB_3, PB_4, PB_5, PB_6, PB_7};  
 //***************************************************************************************************************************************
 // Functions Prototypes
@@ -48,15 +88,21 @@ void LCD_Print(String text, int x, int y, int fontSize, int color, int backgroun
 void LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
 void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int columns, int index, char flip, char offset);
 
-extern uint8_t fondo[];
-extern uint8_t uvg[];
+void LoadImage(File& file) {
+    SPI.setModule(0);
+    unsigned char buf[SCREEN_WIDTH*2];
+    // Remove BMP offset
+    file.read(buf, bmp_offset);
+    for (int y = 0; y < SCREEN_HEIGHT && file.available(); y++) {
+      file.read(buf, SCREEN_WIDTH*2);
+      LCD_Bitmap(0,SCREEN_HEIGHT-y,SCREEN_WIDTH, 1, buf);
+    }
+  Serial.println("done displaying image");
+}
+
 //***************************************************************************************************************************************
 // Initialization
 //***************************************************************************************************************************************
-
-// DEBUG
-const int analogInPin = PE_2;
-int sensorValue = 0;
 
 void setup() {
   SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
@@ -65,6 +111,9 @@ void setup() {
   Serial.println("Start");
   LCD_Init();
   LCD_Clear(0x00);
+
+  // SD Init
+  pinMode(PA_3, OUTPUT);     // change this to 53 on a mega
 
   FillRect(160,5 ,5, 230, 0xFFFFF);
 }
@@ -80,23 +129,6 @@ void setup() {
 //
 //********************************
 
-#define PAD_WIDTH 30
-
-int game_loops = 0;
-int game_speed = 10;
-
-String loser[] = {"L", "O", "S", "E", "R"};
-
-int x = 10;
-int y = 10;
-int speed_x = 3;
-int speed_y = 2;
-
-int player1 = 0;
-int player2 = 0;
-
-int points_1 = 0;
-int points_2 = 0;
 
 void draw_player(unsigned int x, unsigned int y) {
   FillRect(x,0,5, y, 0x0);
@@ -111,16 +143,13 @@ void draw_field() {
   FillRect(160,5 ,5, 230, 0xFFFFF);
 }
 
-
 void draw_score() {
 
   for (int a = 0; a < points_1; a++) {
-//    FillRect(170 + a*10 ,5,5, 5, 0x44444);
     LCD_Print(loser[a],170 + a*10 ,5,1, 0x44444, 0x0000);
   }
 
   for (int b = 0; b < points_2; b++) {
-//    FillRect(150 - b*10 ,5,5, 5, 0x88888);
     LCD_Print(loser[b],100 + b*10 ,5,1, 0x88888, 0x0000);
   }
 }
@@ -153,15 +182,24 @@ void draw_ball() {
       } else {
 
 
-        // Count point
+        // Count pointa
         if (x <= 10) {
           points_2 += 1;
-          Serial.print("Player 2: ");
-          Serial.println(points_2);
+
+          for (int e = 0; e <= 9; e++){
+            delay(100);
+            LCD_Sprite(5, player1, 30, 30, explosion, 9, e, 0, 0);
+          }
+          FillRect(5, player1, 30, 30, 0x0);
+          
         } else if (x >= 305) {
           points_1 += 1;
-          Serial.print("Player 1: ");
-          Serial.println(points_1);
+
+          for (int e = 0; e <= 9; e++){
+            delay(100);
+            LCD_Sprite(290, player2, 30, 30, explosion, 9, e, 1, 0);
+          }
+          FillRect(290, player2, 30, 30, 0x0);
         }
 
         
@@ -173,32 +211,64 @@ void draw_ball() {
   }
 }
 
-void loop() {
-  game_loops +=1;
-  if (game_speed <= 1) {
-    game_speed = 1;
-  } else if (game_speed >2) {
-    game_speed = 2;
-  }else {
-    game_speed = 200/game_loops;
-  }
- 
-  sensorValue = analogRead(analogInPin);
-  player1 = map(sensorValue, 0, 4095, 0, 210); 
-//  Serial.print("sensor = " );                       
-//  Serial.println(speed_y);
-  
-  draw_player(5,player1);
-  draw_player(310,player1);
-  draw_field();
-  draw_score();
-  
-  draw_ball();
+void end_game() {
+  Serial.println("End game");
 
+  SPI.setModule(0);
+  if (!SD.begin(PA_3)){
+    Serial.println("Error reading SD");
+  }
+  // we'll use the initialization code from the utility libraries
+  // since we're just testing if the card is working!
+  if (!card.init(SPI_HALF_SPEED, chipSelect)) {
+    Serial.println("initialization failed. Things to check:");
+    Serial.println("* is a card is inserted?");
+    Serial.println("* Is your wiring correct?");
+    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+    return;
+  } else {
+    Serial.println("Wiring is correct and a card is present.");
+  }
+
+  Serial.println("\nFiles found on the card: ");
+  root.openRoot(volume);
+  
+  if (points_1 >= 5) dataFile= SD.open(loserp2);
+  if (points_2 >= 5) dataFile= SD.open(loserp1);
+
+  
+  LoadImage(dataFile);
 }
 
 
+void loop() {
+ while (points_2 <= 5 && points_1 <= 5) {
+    game_loops +=1;
+    if (game_speed <= 1) {
+      game_speed = 1;
+    } else if (game_speed >10) {
+      game_speed = 10;
+    }else {
+      game_speed = 2000/game_loops;
+    }
+   
+    sensorValue = analogRead(analogInPin1);
+    player1 = map(sensorValue, 0, 4095, 0, 210); 
+    sensorValue = analogRead(analogInPin2);
+    player2 = map(sensorValue, 0, 4095, 0, 210); 
+    
+    draw_player(5,player1);
+    draw_player(310,player1);
+    draw_field();
+    draw_score();
+    
+    draw_ball();
+ }
 
+ end_game();
+ 
+ while (true) {};
+}
 
 
 //***************************************************************************************************************************************
@@ -444,7 +514,6 @@ void LCD_Print(String text, int x, int y, int fontSize, int color, int backgroun
   
   char charInput ;
   int cLength = text.length();
-  Serial.println(cLength,DEC);
   int charDec ;
   int c ;
   int charHex ;
@@ -452,7 +521,6 @@ void LCD_Print(String text, int x, int y, int fontSize, int color, int backgroun
   text.toCharArray(char_array, cLength+1) ;
   for (int i = 0; i < cLength ; i++) {
     charInput = char_array[i];
-    Serial.println(char_array[i]);
     charDec = int(charInput);
     digitalWrite(LCD_CS, LOW);
     SetWindows(x + (i * fontXSize), y, x + (i * fontXSize) + fontXSize - 1, y + fontYSize );
@@ -494,8 +562,8 @@ void LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int
 
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {
-      LCD_DATA(bitmap[k]);
       LCD_DATA(bitmap[k+1]);
+      LCD_DATA(bitmap[k]);
       //LCD_DATA(bitmap[k]);    
       k = k + 2;
      } 
