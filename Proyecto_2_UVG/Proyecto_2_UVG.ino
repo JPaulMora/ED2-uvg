@@ -182,7 +182,7 @@ void draw_ball() {
       } else {
 
 
-        // Count pointa
+        // Count points
         if (x <= 10) {
           points_2 += 1;
 
