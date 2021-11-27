@@ -27,12 +27,15 @@ void setup() {
   pinMode(red0, OUTPUT);
 
   Serial.begin(9600);
+  Serial5.begin(9600);
+  
 }
 
 int p0 = 0;
 int p1 = 0;
 int p2 = 0;
 int p3 = 0;
+int total = 0;
 
 void loop() {
   // put your main code here, to run repeatedly: 
@@ -52,8 +55,9 @@ void loop() {
 
   digitalWrite(green3,p3);
   digitalWrite(red3,!p3);
+
+  total = 4 - (p0 + p1 + p2 + p3);
   
-  Serial.print("P 0:  ");
-  Serial.println(p0);
+  Serial.println(total);
   
 }
